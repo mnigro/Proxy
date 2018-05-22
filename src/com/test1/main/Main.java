@@ -30,6 +30,7 @@ class Proxy extends Thread {
 
     public void run() {
         try {
+
             InputStream incommingRequest = client.getInputStream();
             byte[] b = new byte[8196];
             int len = incommingRequest.read(b);
@@ -41,13 +42,12 @@ class Proxy extends Thread {
                 System.out.println("-------------");
                 System.out.println(request);
 
-                String urlToSocket=request.split(" ")[1].substring(7,request.split(" ")[1].length());
-
-                if (urlToSocket.endsWith("/")) {
-                    urlToSocket = urlToSocket.substring(0, urlToSocket.length() - 1);
+                URL u = new URL(request.split(" ")[1]);
+                if (!(u.getProtocol().equalsIgnoreCase("http"))) {
+                    System.err.println("Solo proceso html!");
                 }
 
-                Socket newSocket = new Socket(urlToSocket, 80);
+                Socket newSocket = new Socket(u.getHost(), 80);
                 OutputStream responseOS = newSocket.getOutputStream();
                 responseOS.write(b, 0, len);
 
@@ -55,13 +55,14 @@ class Proxy extends Thread {
                 InputStream outgoingIS = newSocket.getInputStream();
 
                 System.out.println("RESPONSE");
+
                 System.out.println("-------------");
                 for (int length; (length = outgoingIS.read(b)) != -1;) {
                     incommingOS.write(b, 0, length);
-
                     System.out.println(new String(b,0,length));
                 }
 
+                incommingOS.flush();
                 incommingOS.close();
                 outgoingIS.close();
                 responseOS.close();
